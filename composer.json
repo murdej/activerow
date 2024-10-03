@@ -1,0 +1,31 @@
+{
+    "name": "murdej/activerow",
+    "description": "Murdej active row",
+    "autoload": {
+        "psr-4": {
+            "Murdej\\ActiveRow\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Vít Peprníček",
+            "email": "vit.peprnicek@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "ext-json": "*",
+        "murdej/query-maker-php": "dev-main",
+        "nette/utils": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/murdej/query-maker-php.git"
+        },
+        {
+            "type": "path",
+            "url": "../murdej/query-maker-php/"
+        }
+    ]
+}
