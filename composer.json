@@ -17,15 +17,5 @@
         "ext-json": "*",
         "murdej/query-maker-php": "dev-main",
         "nette/utils": "^4.0"
-    },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/murdej/query-maker-php.git"
-        },
-        {
-            "type": "path",
-            "url": "../murdej/query-maker-php/"
-        }
-    ]
+    }
 }

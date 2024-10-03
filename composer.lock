@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c8cac8fe1cbc1255ffc1376b91720390",
+    "content-hash": "8fbaf2681ea3b24f24d55b98a3d6a128",
     "packages": [
         {
             "name": "murdej/query-maker-php",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/murdej/query-maker-php.git",
-                "reference": "e647502717014eef7a15adfda9eac42fd4d47473"
+                "reference": "3b5edf1f222ec49d6e6cbc5302913be949449d0e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/murdej/query-maker-php/zipball/e647502717014eef7a15adfda9eac42fd4d47473",
-                "reference": "e647502717014eef7a15adfda9eac42fd4d47473",
+                "url": "https://api.github.com/repos/murdej/query-maker-php/zipball/3b5edf1f222ec49d6e6cbc5302913be949449d0e",
+                "reference": "3b5edf1f222ec49d6e6cbc5302913be949449d0e",
                 "shasum": ""
             },
             "default-branch": true,
@@ -27,6 +27,7 @@
                     "Murdej\\QueryMaker\\": "src/QueryMaker/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "authors": [
                 {
                     "name": "Vít Peprníček",
@@ -35,10 +36,10 @@
             ],
             "description": "Database query generator.",
             "support": {
-                "source": "https://github.com/murdej/query-maker-php/tree/main",
-                "issues": "https://github.com/murdej/query-maker-php/issues"
+                "issues": "https://github.com/murdej/query-maker-php/issues",
+                "source": "https://github.com/murdej/query-maker-php/tree/main"
             },
-            "time": "2024-08-15T18:54:12+00:00"
+            "time": "2024-10-03T10:52:55+00:00"
         },
         {
             "name": "nette/utils",
@@ -136,7 +137,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.4",
+        "php": ">=8.0",
         "ext-json": "*"
     },
     "platform-dev": [],
