@@ -17,5 +17,6 @@
         "ext-json": "*",
         "murdej/query-maker-php": "dev-main",
         "nette/utils": "^4.0"
-    }
+    },
+    "minimum-stability": "dev"
 }
