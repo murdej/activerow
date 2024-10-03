@@ -4,23 +4,22 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2a437e96f368eb8f8c9e4fbb10c3f9f3",
+    "content-hash": "d85e12ba7c2be4ee40552aac0b388b93",
     "packages": [
         {
             "name": "murdej/query-maker-php",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/murdej/query-maker-php.git",
-                "reference": "3b5edf1f222ec49d6e6cbc5302913be949449d0e"
+                "reference": "4bf029f4a0f34d2f7da37781cd99bd32be92f208"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/murdej/query-maker-php/zipball/3b5edf1f222ec49d6e6cbc5302913be949449d0e",
-                "reference": "3b5edf1f222ec49d6e6cbc5302913be949449d0e",
+                "url": "https://api.github.com/repos/murdej/query-maker-php/zipball/4bf029f4a0f34d2f7da37781cd99bd32be92f208",
+                "reference": "4bf029f4a0f34d2f7da37781cd99bd32be92f208",
                 "shasum": ""
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -37,13 +36,13 @@
             "description": "Database query generator.",
             "support": {
                 "issues": "https://github.com/murdej/query-maker-php/issues",
-                "source": "https://github.com/murdej/query-maker-php/tree/main"
+                "source": "https://github.com/murdej/query-maker-php/tree/1.0.1"
             },
-            "time": "2024-10-03T10:52:55+00:00"
+            "time": "2024-10-03T12:03:46+00:00"
         },
         {
             "name": "nette/utils",
-            "version": "dev-master",
+            "version": "v4.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/utils.git",
@@ -76,7 +75,6 @@
                 "ext-mbstring": "to use Strings::lower() etc...",
                 "ext-tokenizer": "to use Nette\\Utils\\Reflection::getUseStatements()"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -131,7 +129,7 @@
     ],
     "packages-dev": [],
     "aliases": [],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
