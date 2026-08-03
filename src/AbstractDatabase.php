@@ -3,6 +3,7 @@
 namespace Murdej\ActiveRow;
 
 use Murdej\QueryMaker\Common\Query;
+use Murdej\QueryMaker\Maker\BaseMaker;
 use Murdej\QueryMaker\Maker\MariaDB;
 
 abstract class AbstractDatabase
@@ -22,9 +23,14 @@ abstract class AbstractDatabase
 
     public abstract function dbExecuteQuery(string $query, array $params): array;
 
+    public function makeSqlMaker(): BaseMaker
+    {
+        return new MariaDB();
+    }
+
     public function executeQuery(Query $query): array
     {
-        $qm = new MariaDB();
+        $qm = $this->makeSqlMaker();
         $qav = $qm->makeQuery($query);
         return $this->dbExecuteQuery($qav->query, $qav->values);
     }
