@@ -33,3 +33,6 @@ instead of destructive `DROP` statements, so generated SQL is always safe to rev
 Use the `dbType=<value>` [modificator](entities.md#modificators) on a column to override its
 generated SQL type entirely (bypassing the driver's normal type conversion) when the built-in
 mapping doesn't fit, e.g. `MEDIUMTEXT` instead of the default `TEXT`.
+
+See also: [`MakeMigrateCommand`](bridges.md#console-command-generating-migrations) — a ready-made
+Symfony Console command wrapping this for use in an application.

@@ -19,11 +19,13 @@
         "nette/utils": "^4.1"
     },
     "suggest": {
-        "nette/database": "For use Nette Database"
+        "nette/database": "For use Nette Database",
+        "symfony/console": "For use Murdej\\ActiveRow\\Bridges\\MakeMigrateCommand"
     },
 
     "minimum-stability": "stable",
     "require-dev": {
-        "nette/database": "^3.2"
+        "nette/database": "^3.2",
+        "symfony/console": "^7.0"
     }
 }

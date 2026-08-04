@@ -23,6 +23,7 @@ library itself has no hard dependency on any specific database library.
 - [Events](events.md)
 - [Converting to array / JSON](converting.md)
 - [Database bridges](bridges.md)
+  - [Console command: generating migrations](bridges.md#console-command-generating-migrations)
 - [Generating migrations](migrations.md)
 - [Known limitations](#known-limitations)
 
