@@ -23,6 +23,7 @@ library itself has no hard dependency on any specific database library.
 - [Events](#events)
 - [Converting to array / JSON](#converting-to-array--json)
 - [Database bridges](#database-bridges)
+- [Generating migrations](#generating-migrations)
 - [Known limitations](#known-limitations)
 
 ## Installation
@@ -141,6 +142,11 @@ Comma-separated flags in parentheses after the type/size:
 - `blankNull` — convert empty (falsy) values to `null` before saving
 - `json` — store an array as JSON
 - `fk` — foreign key referencing another entity class, see [Foreign keys](#foreign-keys)
+- `dbType=<value>` — overrides the SQL column type used when generating migrations (see
+  [Generating migrations](#generating-migrations)); the value is used verbatim, without going
+  through the usual PHP-type-to-SQL-type conversion, e.g. `(dbType=MEDIUMTEXT)`. The value shares
+  the same character set as flags in general (letters, digits, `_`), so it can't contain commas,
+  parentheses, or quotes
 
 ```
 @property int $id (autoIncrement)
@@ -456,6 +462,42 @@ $database = new NetteDatabase($explorer);
 
 To integrate a different database layer, extend `AbstractDatabase` the same way — see
 `src/Bridges/CodeIgniterDatabase.php` for a stub to fill in.
+
+## Generating migrations
+
+`Murdej\ActiveRow\Migrations\DbDeploy` compares an entity's declared schema (`TableInfo`/
+`ColumnInfo`, built from `@property` annotations) against the live database schema and generates
+`CREATE TABLE` / `ALTER TABLE` SQL. Schema-specific SQL syntax (identifier quoting, type mapping,
+`DESCRIBE`/`information_schema` introspection queries) lives in a `DbTypeDriver` implementation —
+currently only `Murdej\ActiveRow\Migrations\MariaDB` is provided.
+
+```php
+use Murdej\ActiveRow\Migrations\{DbDeploy, DbSchemaReader, MariaDB};
+use Murdej\ActiveRow\TableInfo;
+
+$driver = new MariaDB();
+$reader = new DbSchemaReader($database, $driver); // $database is an AbstractDatabase bridge
+$deploy = new DbDeploy($driver);
+
+// Fresh install — CREATE TABLE for every entity:
+echo $deploy->createTables([TableInfo::get(User::class), TableInfo::get(Order::class)]);
+
+// Existing database — compare and generate ALTER/CREATE statements:
+$pairs = [];
+foreach ([User::class, Order::class] as $class) {
+    $ti = TableInfo::get($class);
+    $pairs[] = [$ti, $reader->getTableInfo($ti->tableName)];
+}
+echo $deploy->syncTables($pairs);
+```
+
+`syncTables()` only ever generates additive changes (`ADD COLUMN`, `MODIFY COLUMN`, `ADD INDEX`/
+`ADD FOREIGN KEY`); removed columns, indexes, or foreign keys are emitted as `-- TODO:` comments
+instead of destructive `DROP` statements, so generated SQL is always safe to review and run.
+
+Use the `dbType=<value>` [modificator](#modificators) on a column to override its generated SQL
+type entirely (bypassing the driver's normal type conversion) when the built-in mapping doesn't
+fit, e.g. `MEDIUMTEXT` instead of the default `TEXT`.
 
 ## Known limitations
 

@@ -36,7 +36,7 @@ class ColumnInfo // extends \Nette\Object
 
 	public ?string $fkClass = null;
 
-	// public $fkTable = null;
+	public ?string $fkTable = null;
 
 	public bool $autoIncrement = false;
 
@@ -47,6 +47,8 @@ class ColumnInfo // extends \Nette\Object
     public ?string $dbType = null;
 
     public ?string $dbBaseType = null;
+
+    public ?string $liveType = null;
 
     public function getFullName(): string
 	{
@@ -61,7 +63,7 @@ class ColumnInfo // extends \Nette\Object
 			$m1 = null;
 			$m2 = null;
 			if (
-				preg_match('/^([\\\\?A-Za-z_][\\\\0-9A-Za-z_]*)(\\[([0-9]*)(,[0-9]*)?(,[^\\]]*)?\\])? *(\\(([!\\?A-Za-z_0-9,]*)\\))? \\$([A-Za-z_][0-9A-Za-z_]*)$/', $ann, $m1)
+				preg_match('/^([\\\\?A-Za-z_][\\\\0-9A-Za-z_]*)(\\[([0-9]*)(,[0-9]*)?(,[^\\]]*)?\\])? *(\\(([!\\?A-Za-z_0-9,=]*)\\))? \\$([A-Za-z_][0-9A-Za-z_]*)$/', $ann, $m1)
 				|| preg_match('/^([\\\\?A-Za-z_][\\\\0-9A-Za-z_]*) \\$([A-Za-z_][0-9A-Za-z_]*) *(\\[([0-9]*)(,[0-9]*)?(,[^\\]]*)?\\])? *(\\(([!\\?A-Za-z_0-9,=]*)\\))?$/', $ann, $m2)
 				)
 			{
@@ -159,6 +161,9 @@ class ColumnInfo // extends \Nette\Object
                                 if (str_starts_with($flag, 'type=')) {
                                     $this->dbBaseType = substr($flag, 5);
                                 }
+                                elseif (str_starts_with($flag, 'dbType=')) {
+                                    $this->dbType = substr($flag, 7);
+                                }
                                 else throw new \Exception("Invalid column flag '$flag', property '$this->propertyInfo'");
 								break;
 						}
@@ -182,10 +187,10 @@ class ColumnInfo // extends \Nette\Object
 		return $this->tableInfo->className."::".$this->propertyName;
 	}
 
-	public function __construct(string|iterable $ann, string $ns, TableInfo $tableInfo)
+	public function __construct(string|iterable|null $ann, ?string $ns, TableInfo $tableInfo)
 	{
 		$this->tableInfo = $tableInfo;
-		/* if ($ns) */$this->parseAnnotation($ann, $ns);
+		if ($ann !== null) $this->parseAnnotation($ann, $ns);
 	}
 
 	public static array $config = [
