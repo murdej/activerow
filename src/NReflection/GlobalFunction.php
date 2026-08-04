@@ -37,10 +37,10 @@ class GlobalFunction extends \ReflectionFunction
 	use Nette\SmartObject;
 
 	/** @var string|\Closure */
-	private $value;
+	private string|\Closure $value;
 
 
-	public function __construct($name)
+	public function __construct(string|\Closure $name)
 	{
 		parent::__construct($this->value = $name);
 	}
@@ -93,7 +93,7 @@ class GlobalFunction extends \ReflectionFunction
 	 * @param  string
 	 * @return bool
 	 */
-	public function hasAnnotation($name)
+	public function hasAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return !empty($res[$name]);
@@ -105,7 +105,7 @@ class GlobalFunction extends \ReflectionFunction
 	 * @param  string
 	 * @return IAnnotation
 	 */
-	public function getAnnotation($name)
+	public function getAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return isset($res[$name]) ? end($res[$name]) : null;

@@ -2,8 +2,12 @@
 
 namespace Murdej\ActiveRow;
 
+use Murdej\ActiveRow\NReflection\ClassType;
+
 class DBEntity
 {
+    public static mixed $globalEventHandler = null;
+
     public array $src;
 
     public object $entity;
@@ -33,70 +37,40 @@ class DBEntity
 
             return $this->converted[$col];
         }
-        throw new \Exception("Property $dbi->className::$col is not defined.");
-        //todo getter, setter, related
-        /* else if ($dbi->existsRelated($col))
+        //todo: related
+
+        $reflexion = new ClassType(get_class($this->entity));
+        $uname = ucfirst($col);
+        do
         {
-            $ri = $dbi->relateds[$col];
-            if (is_array($this->src))
-            {
-                $items = false;
-            }
-            else
-            {
-                // Háže tam nesmyslnou podmínku a vrátí h*vno
-                //$items = $this->src->related($ri->relTableName, $ri->relColumn);
-                // Pomalejší ale funkční
-                $cn = $ri->relClass;
-                $pkCol = reset($dbi->primary)->columnName;
-                if (!$pkCol) throw new \Exception("Entity '$dbi->className' has not primary column.");
-                return $cn::findBy([(
-                $ri->relColumn ?: $dbi->tableName.'Id'
-                ) => $this->get($pkCol)]);
-            }
-            $sel = new DBSelect(
-                new DBRepository($ri->relClass),
-                $items
-            );
-            return $sel;
-        }
-        else
-        {
-            $reflexion = new ClassType(get_class($this->entity));
-            $uname = ucfirst($col);
-            do
-            {
-                $methodName = 'get' . $uname;
-                if ($reflexion->hasMethod($methodName)) break;
+            $methodName = 'get' . $uname;
+            if ($reflexion->hasMethod($methodName)) break;
 
-                $methodName = 'is' . $uname;
-                if ($reflexion->hasMethod($methodName)) break;
+            $methodName = 'is' . $uname;
+            if ($reflexion->hasMethod($methodName)) break;
 
-                throw new \Exception("Property $reflexion->name::$col is not defined.");
-            } while(false);
-            return $this->entity->$methodName();
-        } */
-
+            throw new \Exception("Property $dbi->className::$col is not defined.");
+        } while(false);
+        return $this->entity->$methodName();
     }
 
-    public function isset($col): bool
+    public function isset(string $col): bool
     {
         $dbi = $this->getDbInfo();
         if ($dbi->existsCol($col) || $dbi->existsRelated($col)) return true;
 
-        //todo: getter, setter
-        /* $reflexion = new ClassType(get_class($this->entity));
+        $reflexion = new ClassType(get_class($this->entity));
         $uname = ucfirst($col);
         $methodName = 'get' . $uname;
         if ($reflexion->hasMethod($methodName)) return true;
 
         $methodName = 'is' . $uname;
-        if ($reflexion->hasMethod($methodName)) return true; */
+        if ($reflexion->hasMethod($methodName)) return true;
 
         return false;
     }
 
-    public function set($col, $value)
+    public function set(string $col, mixed $value)
     {
         $dbi = $this->getDbInfo();
         if ($dbi->existsCol($col))
@@ -113,8 +87,7 @@ class DBEntity
                     unset($this->converted[$colDef->propertyName]);
             }
         }
-        //todo: getter, setter
-        /* else
+        else
         {
             $reflexion = new ClassType(get_class($this->entity));
             $uname = ucfirst($col);
@@ -123,11 +96,10 @@ class DBEntity
             if (!$reflexion->hasMethod($methodName)) throw new \Exception("Column '$col' is not defined in class '".$dbi->className."'.");
 
             $this->entity->$methodName($value);
-        } */
-        // else throw new \Exception("Column $col is not defined.");
+        }
     }
 
-    public function getDbInfo($className = null): TableInfo
+    public function getDbInfo(?string $className = null): TableInfo
     {
         if (!$className) $className = get_class($this->entity);
         return TableInfo::get($className);
@@ -150,7 +122,7 @@ class DBEntity
                 if ($colDef->fkClass && $col == $colDef->propertyName)
                 {
                     $className = $colDef->fkClass;
-                    return $this->database->getEntityByPrimary($className, $this->get($colDef->columnName));
+                    return $this->database->getEntityByPrimary(TableInfo::get($className), $this->get($colDef->columnName));
                 }
                 else if (!$colDef->nullable)
                 {
@@ -187,13 +159,14 @@ class DBEntity
             if ($colInfo->serialize && array_key_exists($col, $this->converted))
             {
                 $dbValue = Converter::get()->convertFrom($this->converted[$col], $colInfo);
-                if (!isset($col, $this->src) || $dbValue != $this->src[$col])
+                if (!isset($this->src[$col]) || $dbValue != $this->src[$col])
                     $res[$colInfo->columnName] = $dbValue;
             }
             if ($forInsert)
             {
                 // Pro insert i default hodnoty
-                if ($colInfo->defaultValue !== null && !in_array($col, $this->modified))
+                if (!in_array($col, $this->modified)
+                    && ($colInfo->defaultValue !== null || array_key_exists($col, $this->getDbInfo()->defaults)))
                 {
                     if (!array_key_exists($col, $this->converted)) $this->get($col);
                     $res[$colInfo->columnName] = Converter::get()->convertFrom($this->converted[$col], $this->getDbInfo()->columns[$col]);
@@ -226,6 +199,13 @@ class DBEntity
             if ($pkCol && $pkCol->autoIncrement) {
                 $this->src[$pkCol->propertyName] = $newId;
             }
+            if ($pkCol) {
+                $pkValue = $this->src[$pkCol->propertyName] ?? null;
+                if ($pkValue !== null) {
+                    $freshEntity = $this->database->getEntityByPrimary($ti, $pkValue);
+                    if ($freshEntity) $this->src = $freshEntity->dbEntity->src;
+                }
+            }
             $this->isNew = false;
             $this->converted = [];
             $this->modified = [];
@@ -249,7 +229,7 @@ class DBEntity
             $this->callEvent($event);
 
             $event->event = Event::prepareDbData;
-            $event->data = $this->getModifiedDbData(true);
+            $event->data = $this->getModifiedDbData(false);
             $this->callEvent($event);
 
             $this->database->updateRow(
@@ -271,17 +251,36 @@ class DBEntity
 
     protected function callEvent(Event $event)
     {
+        $r = null;
         if ($eventMethod = $this->getDbInfo()->events[$event->event] ?? null) {
-            return $this->entity->{$eventMethod}($event);
+            $r = $this->entity->{$eventMethod}($event);
         }
-        return null;
+        if (DBEntity::$globalEventHandler) {
+            (DBEntity::$globalEventHandler)($event);
+        }
+        return $r;
     }
 
     public function fromArray(array $data)
     {
         foreach ($this->getDbInfo()->columns as $colInfo) {
-            if (isset($data[$colInfo->propertyName])) $this->set($colInfo->columnName, $data[$colInfo->propertyName]);
+            if (array_key_exists($colInfo->propertyName, $data)) $this->set($colInfo->columnName, $data[$colInfo->propertyName]);
         }
+    }
+
+    public function toArray(?array $cols = null, bool $fkObjects = false, string $prefix = '')
+    {
+        $dbi = $this->getDbInfo();
+        if (!$cols) $cols = array_keys($dbi->columns);
+        $res = [];
+        foreach ($cols as $col)
+        {
+            $colDef = $dbi->columns[$col];
+            if (!$fkObjects && $colDef->fkClass && $col == $colDef->propertyName) continue;
+            $res[$prefix.$col] = $this->get($col);
+        }
+
+        return $res;
     }
 
 }

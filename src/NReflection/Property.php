@@ -56,7 +56,7 @@ class Property extends \ReflectionProperty
 	 * @param  string
 	 * @return bool
 	 */
-	public function hasAnnotation($name)
+	public function hasAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return !empty($res[$name]);
@@ -68,7 +68,7 @@ class Property extends \ReflectionProperty
 	 * @param  string
 	 * @return IAnnotation
 	 */
-	public function getAnnotation($name)
+	public function getAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return isset($res[$name]) ? end($res[$name]) : null;

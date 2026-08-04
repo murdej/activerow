@@ -54,7 +54,7 @@ class Method extends \ReflectionMethod
 	 * @param  string
 	 * @return static
 	 */
-	public static function from($class, $method)
+	public static function from(string|object $class, string $method)
 	{
 		return new static(is_object($class) ? get_class($class) : $class, $method);
 	}
@@ -127,7 +127,7 @@ class Method extends \ReflectionMethod
 	 * @param  string
 	 * @return bool
 	 */
-	public function hasAnnotation($name)
+	public function hasAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return !empty($res[$name]);
@@ -139,7 +139,7 @@ class Method extends \ReflectionMethod
 	 * @param  string
 	 * @return IAnnotation
 	 */
-	public function getAnnotation($name)
+	public function getAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return isset($res[$name]) ? end($res[$name]) : null;

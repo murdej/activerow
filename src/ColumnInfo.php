@@ -9,39 +9,39 @@ namespace  Murdej\ActiveRow;
 class ColumnInfo // extends \Nette\Object
 {
 	public string $columnName = '';
-	
+
 	public string $propertyName = '';
-	
+
 	public string $type;
-	
+
 	public ?int $typeLen = null;
-	
+
 	public ?int $typeDec = null;
-	
+
 	public mixed $defaultValue = null;
-	
+
 	public bool $unique = false;
-	
+
 	public bool $primary = false;
-	
+
 	public bool $indexed = false;
-	
+
 	public bool $forInsert = true;
-	
+
 	public bool $nullable = false;
 
 	public bool $blankNull = false;
-	
+
 	public bool $forUpdate = true;
-	
-	public ?TableInfo $fkClass = null;
-	
+
+	public ?string $fkClass = null;
+
 	// public $fkTable = null;
-	
+
 	public bool $autoIncrement = false;
 
 	public bool $serialize = false;
-	
+
 	public ?TableInfo $tableInfo = null;
 
     public ?string $dbType = null;
@@ -52,9 +52,9 @@ class ColumnInfo // extends \Nette\Object
 	{
 		return $this->propertyName;
 	}
-	
+
 	// typ[velikost,dec,default](flag,...,!flag) nazev
-	public function parseAnnotation($ann, $ns)
+	public function parseAnnotation(string|iterable $ann, string $ns)
 	{
 		// dump($ann);
 		if (is_string($ann)) {
@@ -69,8 +69,8 @@ class ColumnInfo // extends \Nette\Object
 				{
 					//0, 1,     2,  3,        4,        5,             6,  7       8
 					[$_, $type, $_, $typeLen, $typeDec, $defaultValue, $_, $flags, $propertyName] = $m1 + [null, null, null, null, null, null, null, null, null];
-				} 
-				else if ($m2) 
+				}
+				else if ($m2)
 				{
 					//0, 1,     2,             3,  4,        5,        6,             7   8
 					[$_, $type, $propertyName, $_, $typeLen, $typeDec, $defaultValue, $_, $flags] = $m2 + [null, null, null, null, null, null, null, null, null];
@@ -128,7 +128,7 @@ class ColumnInfo // extends \Nette\Object
 				{
 					$flag = trim($flag);
 					if (isset($flagAlias[$flag])) $flag = $flagAlias[$flag];
-					if ($flag) 
+					if ($flag)
 					{
 						$flagValue = $flag[0] != '!';
 						if (!$flagValue) $flag = substr($flag, 1);
@@ -166,7 +166,7 @@ class ColumnInfo // extends \Nette\Object
 				}
 			} else throw new \Exception("Invalid column def '$ann', property '$this->propertyInfo'");
 		} else {
-			foreach($ann as $k => $v) 
+			foreach($ann as $k => $v)
 			{
 				if ($k == 'name')
 				{
@@ -181,13 +181,13 @@ class ColumnInfo // extends \Nette\Object
 	{
 		return $this->tableInfo->className."::".$this->propertyName;
 	}
-	
-	public function __construct($ann, $ns, $tableInfo)
+
+	public function __construct(string|iterable $ann, string $ns, TableInfo $tableInfo)
 	{
 		$this->tableInfo = $tableInfo;
 		/* if ($ns) */$this->parseAnnotation($ann, $ns);
 	}
-	
+
 	public static array $config = [
 		'namingConvence' => [
 			'fkSuffix' => 'Id',

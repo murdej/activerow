@@ -4,7 +4,7 @@ namespace  Murdej\ActiveRow;
 
 class Convention
 {
-	public static function deriveTableNameFromClass($ns, $scn)
+	public static function deriveTableNameFromClass(string $ns, string $scn)
 	{
 		/*$p = strrpos($cn, '\\');
 		if ($p < 0) $p = 0;
@@ -12,8 +12,8 @@ class Convention
 		return lcfirst(substr($cn, $p));*/
 		return lcfirst($scn);
 	}
-	
-	public static function autoIncrement($ci)
+
+	public static function autoIncrement(ColumnInfo $ci)
 	{
 		$ci->type = 'int';
 		$ci->primary = true;

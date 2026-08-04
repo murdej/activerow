@@ -29,10 +29,10 @@ class Parameter extends \ReflectionParameter
 	use Nette\SmartObject;
 
 	/** @var mixed */
-	private $function;
+	private array|string|\Closure $function;
 
 
-	public function __construct($function, $parameter)
+	public function __construct(array|string|\Closure $function, string|int $parameter)
 	{
 		parent::__construct($this->function = $function, $parameter);
 	}

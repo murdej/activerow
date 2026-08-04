@@ -2,22 +2,20 @@
 
 namespace Murdej\ActiveRow;
 
+use Murdej\QueryMaker\Common\ColumnCollection;
+use Murdej\QueryMaker\Common\Identifier;
+use Murdej\QueryMaker\Common\OrderCollection;
 use Murdej\QueryMaker\Common\Query;
 
-class DBSelect implements \Iterator
+class DBSelect implements \Iterator, \Countable
 {
-    /**
-     * @param AbstractDatabase $database
-     * @param TableInfo|string $table
-     */
-
     protected AbstractDatabase $database;
 
     protected TableInfo $tableInfo;
 
     public Query $query;
 
-    public function __construct(AbstractDatabase $database, $table)
+    public function __construct(AbstractDatabase $database, TableInfo|string $table)
     {
         $this->database = $database;
         $this->tableInfo = $table instanceof TableInfo ? $table : TableInfo::get($table);
@@ -69,7 +67,7 @@ class DBSelect implements \Iterator
      * @param $a
      * @return $this
      */
-    public function where($a): self
+    public function where(mixed $a): self
     {
         $this->query->conditions->addMulti(is_array($a) ? $a : [$a]);
         return $this;
@@ -80,7 +78,7 @@ class DBSelect implements \Iterator
      * @param ...$columns
      * @return $this
      */
-    public function select(...$columns): self
+    public function select(string|Identifier ...$columns): self
     {
         foreach ($columns as $column) {
             $this->query->columns->addColumn($column);
@@ -94,7 +92,7 @@ class DBSelect implements \Iterator
      * @param ...$columns
      * @return $this
      */
-    public function order(...$columns): self
+    public function order(string|Identifier ...$columns): self
     {
         foreach ($columns as $column) {
             $this->query->orders->addColumn($column);
@@ -157,5 +155,81 @@ class DBSelect implements \Iterator
         foreach ($this as $entity) $res[] = $entity->dbEntity->src;
 
         return $res;
+    }
+
+    /**
+     * @param string|callable|null $key
+     * @param string|callable|null $value
+     * @return array<mixed,mixed>
+     */
+    public function fetchPairs(string|callable|null $key, string|callable|null $value = null): array
+    {
+        $res = [];
+        foreach ($this as $row) {
+            if ($key) {
+                $k = $this->getColValue($row, $key);
+                $res[$k] = $value ? $this->getColValue($row, $value) : $row;
+            } else {
+                $res[] = $value ? $this->getColValue($row, $value) : $row;
+            }
+        }
+
+        return $res;
+    }
+
+    protected function getColValue(object $row, string|callable $col)
+    {
+        if (is_string($col)) return $row->$col;
+        if (is_callable($col)) return $col($row);
+        throw new \Exception('Column must be string or callable');
+    }
+
+    public function fetchField(int|string|null $field = null)
+    {
+        $this->fetchResultIfNeed();
+        $row = reset($this->result);
+        if ($row === false) return null;
+        if ($field !== null) return $row[$field] ?? null;
+
+        return reset($row);
+    }
+
+    public function fetchArray(bool $rowIsArray = false): array
+    {
+        $res = [];
+        foreach ($this as $row) {
+            if ($rowIsArray) $row = $row->toArray();
+            $res[] = $row;
+        }
+
+        return $res;
+    }
+
+    /**
+     * @return array<string,mixed>[]
+     */
+    public function fetchArrayWithExtraFields(): array
+    {
+        $res = [];
+        foreach ($this as $entity) {
+            $row = $entity->dbEntity->src;
+            foreach ($entity->toArray() as $k => $v) $row[$k] = $v;
+            $res[] = $row;
+        }
+
+        return $res;
+    }
+
+    public function count(): int
+    {
+        $countQuery = clone $this->query;
+        $countQuery->columns = new ColumnCollection($countQuery);
+        $countQuery->columns->addSnippet('cnt')->code('COUNT(*)');
+        $countQuery->orders = new OrderCollection($countQuery);
+        $countQuery->limitCount = null;
+        $countQuery->limitFrom = 0;
+
+        $rows = $this->database->executeQuery($countQuery);
+        return (int) ($rows[0]['cnt'] ?? 0);
     }
 }

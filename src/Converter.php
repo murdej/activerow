@@ -8,16 +8,32 @@ class Converter
 	{
 		return new Converter();
 	}
-	
-	// Konverze z DB do Ent
-	public function convertTo($value, $columnInfo, $col, DBEntity $dbEntity)
+
+	/**
+	 *
+	 * Convert form DB value to entity value
+	 *
+	 * @param $value
+	 * @param $columnInfo
+	 * @param $col
+	 * @param DBEntity $dbEntity
+	 * @return array|\BackedEnum|bool|\DateTime|float|int|mixed|string|null
+	 * @throws \Exception
+	 */
+	public function convertTo(mixed $value, ColumnInfo $columnInfo, string $col, DBEntity $dbEntity)
 	{
 		if ($columnInfo->serialize)
 		{
 			$className = $columnInfo->type;
-			$obj = new $className();
-			$obj->fromDbValue($value);
-			
+			if (is_callable([$className, 'fromDbValue'])) {
+				// statická metoda
+				$obj = $className::fromDbValue($value);
+			} else {
+				// instanční metoda
+				$obj = new $className();
+				$obj->fromDbValue($value);
+			}
+
 			return $obj;
 		}
 		if ($value === null)
@@ -29,10 +45,13 @@ class Converter
 			if ($columnInfo->fkClass) return null;
 			// pokud je default hodnota nastav
 			if ($columnInfo->defaultValue !== null) return $columnInfo->defaultValue;
-			 
+
 			throw new \Exception("Column ".($columnInfo->tableInfo ? $columnInfo->tableInfo->className.'::' : '')."$columnInfo->fullName is not nullable");
 		}
-		if ($columnInfo->fkClass && $col == $columnInfo->propertyName) 
+		if (interface_exists('\BackedEnum') && is_subclass_of($columnInfo->type, \BackedEnum::class)) {
+			return ($columnInfo->type)::tryFrom($value);
+		}
+		if ($columnInfo->fkClass && $col == $columnInfo->propertyName)
 		{
 			$cls = $columnInfo->fkClass;
             //todo: nestatické repo
@@ -87,6 +106,9 @@ class Converter
 					/*$dt = new \DateTime();
 					$dt->setTimestamp((int)$value);
 					return $dt; */
+					if (is_string($value)) {
+						$value = new \DateTime($value);
+					}
 					return $value;
 				default:
 					throw new \Exception("Unknown type ".($columnInfo->tableInfo ? $columnInfo->tableInfo->className.'::' : '')."$columnInfo->type");
@@ -96,21 +118,26 @@ class Converter
 	}
 
 	// Konverze z entity do DB
-	public function convertFrom($value, $columnInfo/*, $dbEntity */)
+	public function convertFrom(mixed $value, ColumnInfo $columnInfo/*, $dbEntity */)
 	{
 		if ($value === null) return null;
 		if ($columnInfo->serialize)
 		{
 			return $value->toDbValue();
-		} 
+		}
 		else
 		{
+			if (interface_exists('\BackedEnum') && is_subclass_of($columnInfo->type, \BackedEnum::class)) {
+				return $value->value;
+			}
 			switch($columnInfo->type)
 			{
 				case 'json':
 					return json_encode($value);
 				case 'DateTime':
-					return $value; // $value->getTimestamp();
+					if (!$value) return null;
+					if (is_string($value)) return new \DateTime($value);
+					return $value;
 				case 'int':
 					return $value === '' ? null : (int)$value;
                 case 'float':
@@ -120,7 +147,7 @@ class Converter
 		}
 	}
 	
-	public function getDefaultOfType($type)
+	public function getDefaultOfType(string $type)
 	{
 		switch($type)
 		{

@@ -7,25 +7,20 @@ use Murdej\QueryMaker\Common\Query;
 /**
  * @template T
  */
-abstract class DBRepository
+class DBRepository
 {
-    protected AbstractDatabase $database;
 
     protected TableInfo $tableInfo;
 
     /**
-     * @var string
-     * @abstract
-     */
-    protected ?string $className = null;
-
-    /**
      * @throws \Exception
      */
-    public function __construct(AbstractDatabase $database)
+    public function __construct(
+		protected AbstractDatabase $database,
+	    protected ?string $className = null,
+	)
     {
         if (!$this->className) throw new \Exception("Table name not specified");
-        $this->database = $database;
         $this->tableInfo = TableInfo::get($this->className);
     }
 
@@ -42,8 +37,9 @@ abstract class DBRepository
      * @param $id
      * @return T|null
      */
-    public function get($id): ?object
+    public function get(int|string|null $id): ?object
     {
+        if ($id === null) return null;
         return $this->database->getEntityByPrimary($this->tableInfo, $id);
     }
 

@@ -29,7 +29,7 @@ class TableInfo
      */
 	public array $events = [];
 	
-	public function parseClass($cn)
+	public function parseClass(string $cn)
 	{
 		$ref = new ClassType($cn);
 		$anns = $ref->getAnnotations();
@@ -95,24 +95,24 @@ class TableInfo
 		}
 	}
 
-	public function existsCol($col) 
+	public function existsCol(string $col)
 	{
 		return isset($this->columns[$col]) || isset($this->fkColumns[$col]);
 	}
-	
-	public function existsRelated($col)
+
+	public function existsRelated(string $col)
 	{
 		return isset($this->relateds[$col]);
 	}
-	
-	public function __construct($cn)
+
+	public function __construct(?string $cn)
 	{
 		if ($cn) $this->parseClass($cn);
 	}
 
-	protected static $dbInfoCache = [];
-	
-	public static function get($className) : TableInfo
+	protected static array $dbInfoCache = [];
+
+	public static function get(string $className) : TableInfo
 	{
 		if (!isset(self::$dbInfoCache[$className]))
 		{
@@ -122,19 +122,19 @@ class TableInfo
 		return self::$dbInfoCache[$className];
 	}
 
-    public static function tableName($className) : string
+    public static function tableName(string $className) : string
     {
         self::get($className)->tableName;
     }
 
-    public static function getFullClassName($className, $nameSpace)
+    public static function getFullClassName(string $className, string $nameSpace)
 	{
-		return (strpos($className, '\\') == false) 
+		return (strpos($className, '\\') == false)
 			? $nameSpace.'\\'.$className
 			: $className;
 	}
-	
-	public static function splitClassName($className)
+
+	public static function splitClassName(string $className)
 	{
 		$p = strrpos($className, '\\');
 		return ($p === false)
@@ -142,7 +142,7 @@ class TableInfo
 			: [substr($className, 0, $p), substr($className, $p + 1)];
 	}
 
-	protected $_columnNames = null;
+	protected ?array $_columnNames = null;
 
 	public function getColumnNames(?bool $inDb = null)
 	{

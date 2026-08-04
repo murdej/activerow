@@ -50,7 +50,7 @@ class ClassType extends \ReflectionClass
 	 * @param  string|object
 	 * @return static
 	 */
-	public static function from($class)
+	public static function from(string|object $class)
 	{
 		return new static($class);
 	}
@@ -66,7 +66,7 @@ class ClassType extends \ReflectionClass
 	 * @param  string
 	 * @return bool
 	 */
-	public function is($type)
+	public function is(string $type)
 	{
 		return is_a($this->getName(), $type, true);
 	}
@@ -111,7 +111,7 @@ class ClassType extends \ReflectionClass
 	 * @return Method
 	 */
 	#[\ReturnTypeWillChange]
-	public function getMethod($name)
+	public function getMethod(string $name)
 	{
 		return new Method($this->getName(), $name);
 	}
@@ -121,7 +121,7 @@ class ClassType extends \ReflectionClass
 	 * @return Method[]
 	 */
 	#[\ReturnTypeWillChange]
-	public function getMethods($filter = -1)
+	public function getMethods(?int $filter = -1)
 	{
 		foreach ($res = parent::getMethods($filter) as $key => $val) {
 			$res[$key] = new Method($this->getName(), $val->getName());
@@ -144,7 +144,7 @@ class ClassType extends \ReflectionClass
 	 * @return Property[]
 	 */
 	#[\ReturnTypeWillChange]
-	public function getProperties($filter = -1)
+	public function getProperties(?int $filter = -1)
 	{
 		foreach ($res = parent::getProperties($filter) as $key => $val) {
 			$res[$key] = new Property($this->getName(), $val->getName());
@@ -157,7 +157,7 @@ class ClassType extends \ReflectionClass
 	 * @return Property
 	 */
 	#[\ReturnTypeWillChange]
-	public function getProperty($name)
+	public function getProperty(string $name)
 	{
 		return new Property($this->getName(), $name);
 	}
@@ -171,7 +171,7 @@ class ClassType extends \ReflectionClass
 	 * @param  string
 	 * @return bool
 	 */
-	public function hasAnnotation($name)
+	public function hasAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return !empty($res[$name]);
@@ -183,7 +183,7 @@ class ClassType extends \ReflectionClass
 	 * @param  string
 	 * @return IAnnotation
 	 */
-	public function getAnnotation($name)
+	public function getAnnotation(string $name)
 	{
 		$res = AnnotationsParser::getAll($this);
 		return isset($res[$name]) ? end($res[$name]) : null;

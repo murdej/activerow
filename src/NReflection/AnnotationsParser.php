@@ -26,22 +26,22 @@ class AnnotationsParser
 	const RE_IDENTIFIER = '[_a-zA-Z\x7F-\xFF][_a-zA-Z0-9\x7F-\xFF-\\\]*';
 
 	/** @var bool */
-	public static $useReflection;
+	public static ?bool $useReflection = null;
 
 	/** @var bool */
-	public static $autoRefresh = true;
+	public static bool $autoRefresh = true;
 
 	/** @var array */
-	public static $inherited = ['description', 'param', 'return'];
+	public static array $inherited = ['description', 'param', 'return'];
 
 	/** @var array */
-	private static $cache;
+	private static ?array $cache = null;
 
 	/** @var array */
-	private static $timestamps;
+	private static ?array $timestamps = null;
 
 	/** @var Nette\Caching\IStorage */
-	private static $cacheStorage;
+	private static ?Nette\Caching\IStorage $cacheStorage = null;
 
 
 	/**
@@ -142,7 +142,7 @@ class AnnotationsParser
 	 * @return string  fully qualified class name
 	 * @throws Nette\InvalidArgumentException
 	 */
-	public static function expandClassName($name, \ReflectionClass $reflector)
+	public static function expandClassName(string $name, \ReflectionClass $reflector)
 	{
 		if (empty($name)) {
 			throw new Nette\InvalidArgumentException('Class name must not be empty.');
@@ -182,7 +182,7 @@ class AnnotationsParser
 	 * @param  string
 	 * @return array
 	 */
-	private static function parseComment($comment)
+	private static function parseComment(string|false $comment)
 	{
 		static $tokens = ['true' => true, 'false' => false, 'null' => null, '' => true];
 
@@ -265,7 +265,7 @@ class AnnotationsParser
 	 * @return array [class => [prop => comment (or 'use' => [alias => class])]
 	 * @internal
 	 */
-	public static function parsePhp($code)
+	public static function parsePhp(string $code)
 	{
 		if (Strings::match($code, '#//nette' . 'loader=(\S*)#')) {
 			return;
@@ -369,7 +369,7 @@ class AnnotationsParser
 	}
 
 
-	private static function fetch(&$tokens, $take)
+	private static function fetch(array &$tokens, array|int|string $take)
 	{
 		$res = null;
 		while ($token = current($tokens)) {

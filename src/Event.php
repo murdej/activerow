@@ -31,6 +31,7 @@ class Event
             Event::beforeUpdate,
             Event::afterUpdate,
             Event::afterSave,
+            Event::prepareDbData,
             // Event::defaultValues,
         ];
     }
