@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-10
+
 ### Added
 
 - `dbType=<value>` column flag: overrides the SQL column type used when generating migrations,
@@ -94,8 +96,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   entity/property — they referenced a `$this->propertyInfo` magic property that doesn't exist (no
   `__get()` is defined), so the class/property name was silently dropped from the message.
 - `MariaDB::getSqlDataType()`'s backed-enum detection could let a raw `ReflectionException` escape
-  (e.g. `Class "..." does not exist`) instead of the library's own "Unknown type" exception, when
+  (e.g. `Class "..." does not exist`) instead of the library's own "unknown type" exception, when
   `enum_exists()` and `ReflectionEnum` disagreed about a type being loadable (seen with a class
   reachable only through a stale/optimized classmap, not through PSR-4). The fallback exception now
-  also names the offending entity **and** property, and hints when the type looks like an
-  unresolvable class/enum.
+  also names the offending entity **and** property, hints when the type looks like an unresolvable
+  class/enum, and reads "I don't know how to convert the '...' type to a DB type for ..." instead
+  of the earlier, more cryptic "Unknown type '...' for ...".
