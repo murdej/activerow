@@ -25,6 +25,7 @@ library itself has no hard dependency on any specific database library.
 - [Database bridges](bridges.md)
   - [Console command: generating migrations](bridges.md#console-command-generating-migrations)
 - [Generating migrations](migrations.md)
+- [Caching entity metadata](caching.md)
 - [Known limitations](#known-limitations)
 
 ## Installation
@@ -89,7 +90,8 @@ foreach ($users->findBy(['name' => 'Franta Novák']) as $user) {
 
 See [Defining an entity](entities.md), [Repository](repository.md), [Querying](querying.md),
 [Saving entities](saving.md), [Events](events.md), [Converting to array / JSON](converting.md),
-[Database bridges](bridges.md) and [Generating migrations](migrations.md) for the full reference.
+[Database bridges](bridges.md), [Generating migrations](migrations.md) and [Caching entity
+metadata](caching.md) for the full reference.
 
 ## Known limitations
 
