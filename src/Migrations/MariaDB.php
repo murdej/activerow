@@ -45,7 +45,35 @@ class MariaDB implements DbTypeDriver
                 $t = 'DATETIME';
                 break;
             default:
-                throw new \Exception("Unknown type " . ($column->tableInfo ? $column->tableInfo->className . '::' : '') . "$column->type / $column->dbBaseType");
+                $enumRef = null;
+                if (enum_exists($column->type)) {
+                    try {
+                        $enumRef = new \ReflectionEnum($column->type);
+                    } catch (\ReflectionException) {
+                        // enum_exists() said yes but the class still couldn't be resolved (e.g. a
+                        // stale/optimized classmap listing a class its autoloader can no longer
+                        // find) — fall through to the "unknown type" exception below instead of
+                        // letting a raw, entity-less ReflectionException escape.
+                        $enumRef = null;
+                    }
+                }
+                if ($enumRef?->isBacked()) {
+                    if ($enumRef->getBackingType()->getName() === 'int') {
+                        $t = 'INT(' . ($column->typeLen ?: 10) . ')';
+                    } else {
+                        $maxLen = 0;
+                        foreach ($column->type::cases() as $case) {
+                            $maxLen = max($maxLen, strlen((string) $case->value));
+                        }
+                        $t = 'VARCHAR(' . ($column->typeLen ?: $maxLen) . ')';
+                    }
+                    break;
+                }
+                $typeDesc = $column->dbBaseType !== null ? "$column->type (dbBaseType=$column->dbBaseType)" : $column->type;
+                $hint = class_exists($column->type) || enum_exists($column->type)
+                    ? ''
+                    : ' — class/enum could not be autoloaded, check its namespace/PSR-4 mapping';
+                throw new \Exception("Unknown type '$typeDesc' for " . ($column->tableInfo ? $column->tableInfo->className . '::' : '') . "$column->propertyName" . $hint);
         }
         return [$t, $ch];
     }

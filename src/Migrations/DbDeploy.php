@@ -29,8 +29,8 @@ class DbDeploy
             self::OrderIndex => [],
             self::OrderFK => [],
         ];
-        $columnsByPropertyName = []; // $ti->columns;
-        foreach ($ti->columns as $column) $columnsByPropertyName[$column->propertyName] = $column;
+        $columnsByPropertyName = []; // $ti->dbColumns;
+        foreach ($ti->dbColumns as $column) $columnsByPropertyName[$column->propertyName] = $column;
         foreach ($columnsByPropertyName as $k => $column) {
             if ($column->fkClass && isset($columnsByPropertyName[$column->propertyName]))
                 $columnsByPropertyName[$column->columnName] = $column;
@@ -162,7 +162,7 @@ class DbDeploy
 
         $dbColumnsByName = [];
         foreach ($dbTable->columns as $column) $dbColumnsByName[$column->columnName] = $column;
-        $columns = $appTable->columns;
+        $columns = $appTable->dbColumns;
         // Clear *Id when exists foreign
         foreach ($columns as $k => $column) {
             if ($column->columnName !== $column->propertyName) {

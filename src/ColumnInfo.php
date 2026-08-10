@@ -6,7 +6,7 @@ namespace  Murdej\ActiveRow;
  * @property string $fullName
  * @property string $propertyInfo
  */
-class ColumnInfo // extends \Nette\Object
+class ColumnInfo implements \JsonSerializable // extends \Nette\Object
 {
 	public string $columnName = '';
 
@@ -50,6 +50,10 @@ class ColumnInfo // extends \Nette\Object
 
     public ?string $liveType = null;
 
+	public bool $useGet = false;
+
+	public bool $useSet = false;
+
     public function getFullName(): string
 	{
 		return $this->propertyName;
@@ -58,128 +62,7 @@ class ColumnInfo // extends \Nette\Object
 	// typ[velikost,dec,default](flag,...,!flag) nazev
 	public function parseAnnotation(string|iterable $ann, string $ns)
 	{
-		// dump($ann);
-		if (is_string($ann)) {
-			$m1 = null;
-			$m2 = null;
-			if (
-				preg_match('/^([\\\\?A-Za-z_][\\\\0-9A-Za-z_]*)(\\[([0-9]*)(,[0-9]*)?(,[^\\]]*)?\\])? *(\\(([!\\?A-Za-z_0-9,=]*)\\))? \\$([A-Za-z_][0-9A-Za-z_]*)$/', $ann, $m1)
-				|| preg_match('/^([\\\\?A-Za-z_][\\\\0-9A-Za-z_]*) \\$([A-Za-z_][0-9A-Za-z_]*) *(\\[([0-9]*)(,[0-9]*)?(,[^\\]]*)?\\])? *(\\(([!\\?A-Za-z_0-9,=]*)\\))?$/', $ann, $m2)
-				)
-			{
-				if ($m1)
-				{
-					//0, 1,     2,  3,        4,        5,             6,  7       8
-					[$_, $type, $_, $typeLen, $typeDec, $defaultValue, $_, $flags, $propertyName] = $m1 + [null, null, null, null, null, null, null, null, null];
-				}
-				else if ($m2)
-				{
-					//0, 1,     2,             3,  4,        5,        6,             7   8
-					[$_, $type, $propertyName, $_, $typeLen, $typeDec, $defaultValue, $_, $flags] = $m2 + [null, null, null, null, null, null, null, null, null];
-				}
-				// dump($m);
-				$flagList = explode(',', $flags ?: "");
-				if (in_array("autoIncrement", $flagList)) $type = "autoIncrement";
-				if (in_array("json", $flagList)) $type = "json";
-				$this->propertyName = $this->columnName = trim($propertyName);
-				$this->type = trim($type);
-				if ($this->type[0] == '?')
-				{
-					$this->type = substr($this->type, 1);
-					$this->nullable = true;
-                    $flagList[] = "nullable";
-				}
-				if ($this->type == "\DateTime") $this->type = "DateTime";
-				if ($this->type == 'autoIncrement')
-				{
-					Convention::autoIncrement($this);
-				}
-				$this->typeLen = trim($typeLen) ? (int)$typeLen : null;
-				$this->typeDec = strlen(trim($typeDec ?: '')) > 1 ? (int)substr($typeDec, 1) : null;
-				$this->defaultValue = strlen(trim($defaultValue ?: '')) > 1 ? substr($defaultValue, 1) : null;
-				if ($this->defaultValue)
-				{
-					switch($this->dbBaseType)
-					{
-						case 'json':
-							switch($this->defaultValue)
-							{
-								case 'n':
-									$this->defaultValue = null;
-									break;
-								case 'l':
-								case 'a':
-								case 'd':
-									$this->defaultValue = [];
-									break;
-								case 't':
-									$this->defaultValue = true;
-									break;
-								case 'f':
-									$this->defaultValue = false;
-									break;
-								default:
-									$this->defaultValue = json_decode($this->defaultValue, true);
-									break;
-							}
-							break;
-					}
-				}
-				$flagAlias = [ '?' => 'nullable', 'pk' => 'primary', "index" => "indexed" ];
-				foreach($flagList as $flag)
-				{
-					$flag = trim($flag);
-					if (isset($flagAlias[$flag])) $flag = $flagAlias[$flag];
-					if ($flag)
-					{
-						$flagValue = $flag[0] != '!';
-						if (!$flagValue) $flag = substr($flag, 1);
-						switch($flag)
-						{
-							case 'unique':
-							case 'primary':
-							case 'indexed':
-							case 'forInsert':
-							case 'forUpdate':
-							case 'serialize':
-							case 'nullable':
-							case 'autoIncrement':
-							case 'blankNull':
-								$this->$flag = $flagValue;
-								break;
-							case 'fk':
-								$this->fkClass = TableInfo::getFullClassName($this->type, $ns);
-								//todo: detekovat podle PK druhé tabulky
-								$this->type = 'int';
-								$this->columnName = $this->propertyName.'Id';
-								break;
-							case "autoincrement": // pseudotypes
-							case "json":
-								break;
-                            default:
-                                //todo: php>80
-                                if (str_starts_with($flag, 'type=')) {
-                                    $this->dbBaseType = substr($flag, 5);
-                                }
-                                elseif (str_starts_with($flag, 'dbType=')) {
-                                    $this->dbType = substr($flag, 7);
-                                }
-                                else throw new \Exception("Invalid column flag '$flag', property '$this->propertyInfo'");
-								break;
-						}
-					}
-				}
-			} else throw new \Exception("Invalid column def '$ann', property '$this->propertyInfo'");
-		} else {
-			foreach($ann as $k => $v)
-			{
-				if ($k == 'name')
-				{
-					$this->propertyName = $v;
-					$this->columnName = $v;
-				} else $this->$k = $v;
-			}
-		}
+		EntityReflexion::parseColumn($this, $ann, $ns, []);
 	}
 
 	public function getPropertyInfo(): string
@@ -207,5 +90,55 @@ class ColumnInfo // extends \Nette\Object
 	public function getFkTableInfo() : ?TableInfo
 	{
 		return $this->fkClass ? TableInfo::get($this->fkClass) : null;
+	}
+
+	public function isVirtual(): bool
+	{
+		return $this->useGet || $this->useSet;
+	}
+
+	public function jsonSerialize(): array
+	{
+		return [
+			'columnName' => $this->columnName,
+			'propertyName' => $this->propertyName,
+			'type' => $this->type ?? null,
+			'typeLen' => $this->typeLen,
+			'typeDec' => $this->typeDec,
+			'defaultValue' => $this->defaultValue,
+			'unique' => $this->unique,
+			'primary' => $this->primary,
+			'indexed' => $this->indexed,
+			'forInsert' => $this->forInsert,
+			'nullable' => $this->nullable,
+			'blankNull' => $this->blankNull,
+			'forUpdate' => $this->forUpdate,
+			'fkClass' => $this->fkClass,
+			'fkTable' => $this->fkTable,
+			'autoIncrement' => $this->autoIncrement,
+			'serialize' => $this->serialize,
+			'dbType' => $this->dbType,
+			'dbBaseType' => $this->dbBaseType,
+			'liveType' => $this->liveType,
+			'useGet' => $this->useGet,
+			'useSet' => $this->useSet,
+		];
+	}
+
+	public static function fromArray(array $data, TableInfo $tableInfo): self
+	{
+		$ci = new self(null, null, $tableInfo);
+		foreach ($data as $key => $value)
+		{
+			if ($key === 'type' && $value === null) continue;
+			if (property_exists($ci, $key)) $ci->$key = $value;
+		}
+
+		return $ci;
+	}
+
+	public static function fromJson(string $json, TableInfo $tableInfo): self
+	{
+		return self::fromArray(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $tableInfo);
 	}
 }

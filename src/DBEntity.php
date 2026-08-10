@@ -153,7 +153,7 @@ class DBEntity
             $colInfo = $this->getDbInfo()->columns[$col];
             $res[$colInfo->columnName] = Converter::get()->convertFrom($this->converted[$col], $this->getDbInfo()->columns[$col]);
         }
-        foreach($this->getDbInfo()->columns as $col => $colInfo)
+        foreach($this->getDbInfo()->dbColumns as $col => $colInfo)
         {
             // serializované
             if ($colInfo->serialize && array_key_exists($col, $this->converted))

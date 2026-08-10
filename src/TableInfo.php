@@ -4,7 +4,7 @@ namespace Murdej\ActiveRow;
 
 use Murdej\ActiveRow\NReflection\ClassType;
 
-class TableInfo
+class TableInfo implements \JsonSerializable
 {
 	public string $tableName;
 	
@@ -17,7 +17,10 @@ class TableInfo
 	
 	/** @var ColumnInfo[] */
 	public array $columns = [];
-	
+
+	/** @var ColumnInfo[] Subset of $columns actually persisted to the database (excludes get/set-only virtual columns). */
+	public array $dbColumns = [];
+
 	public array $defaults = [];
 	
 	// public $relateds = [];
@@ -31,73 +34,28 @@ class TableInfo
 	
 	public function parseClass(string $cn)
 	{
-		$ref = new ClassType($cn);
-		$anns = $ref->getAnnotations();
-		// dump($anns);
-		$this->className = $cn;
-		list($ns, $scn) = self::splitClassName($cn);
-		if (!isset($anns['dbTable']) && !isset($anns['property'])) return null;
-		if (isset($anns['dbTable']) && $anns['dbTable'][0]) 
-		{
-			if (is_string($anns['dbTable'][0]))
-			{
-				$this->tableName = $anns['dbTable'][0];
-			} 
-			else if ($anns['dbTable'][0] == true) 
-			{
-				$this->tableName = Convention::deriveTableNameFromClass($ns, $scn);
-			}
-			else throw new \Exception("Invalid table def $anns[dbTable][0]");
-		}
-		// Výchzí hodnoty
-		if (isset($anns['defaultValues']))
-		{
-			//todo: Další možnosti - jiný název metody, statická property
-			$this->defaults = $cn::defaultValues();
-		}
-		
-		if (!isset($anns['property'])) throw new \Exception("Must define any property");
-		foreach($anns['property'] as $pa)
-		{
-			$ci = new ColumnInfo($pa, $ns, $this);
-			// $ci->tableInfo = $this;
-			$this->columns[$ci->propertyName] = $ci;
-			if ($ci->fkClass)
-			{
-				$this->columns[$ci->columnName] = $ci;
-			}
-			if ($ci->primary) $this->primary[$ci->propertyName] = $ci;
-			if ($ci->defaultValue) $this->defaults[$ci->propertyName] = $ci->defaultValue;
-		}
-        //todo:
-		/* if (isset($anns['related'])) foreach($anns['related'] as $pa)
-		{
-			$ri = new RelatedInfo($pa, $ns);
-			//todo: Kontrola na duplicitní název se sloupcem
-			$this->relateds[$ri->propertyName] = $ri;
-		}
-		if (isset($anns['defaultOrder'])) 
-		{
-			$this->defaultOrder = $anns['defaultOrder'][0];
-		} */
+		EntityReflexion::parseTable($this, $cn);
+	}
 
-		if (isset($anns['event']))
+	public function addColumn(ColumnInfo $ci): void
+	{
+		$this->columns[$ci->propertyName] = $ci;
+		if ($ci->fkClass)
 		{
-			foreach($anns['event'] as $ev)
-			{
-				$tmp = explode(' ', $ev);
-                if (!in_array($tmp[0], Event::allNames())) throw new \Exception("Event $tmp[0] is not a valid event");
-				if (count($tmp) == 2)
-					$this->events[$tmp[0]] = $tmp[1];
-				else
-					$this->events[$tmp[0]] = $tmp[0];
-			}
+			$this->columns[$ci->columnName] = $ci;
 		}
+		if (!$ci->isVirtual())
+		{
+			$this->dbColumns[$ci->propertyName] = $ci;
+			if ($ci->fkClass) $this->dbColumns[$ci->columnName] = $ci;
+		}
+		if ($ci->primary) $this->primary[$ci->propertyName] = $ci;
+		if ($ci->defaultValue) $this->defaults[$ci->propertyName] = $ci->defaultValue;
 	}
 
 	public function existsCol(string $col)
 	{
-		return isset($this->columns[$col]) || isset($this->fkColumns[$col]);
+		return isset($this->dbColumns[$col]) || isset($this->fkColumns[$col]);
 	}
 
 	public function existsRelated(string $col)
@@ -152,7 +110,7 @@ class TableInfo
 			foreach($this->columns as $colName => $col)
 			{
 				// dump($col);
-                if ($inDb === null || ($inDb === ($col->columnName === $col->propertyName))) {
+                if ($inDb === null || ($inDb === isset($this->dbColumns[$colName]))) {
                     $this->_columnNames[] = $colName; //$col->propertyName;
                     // if ($col->fkClass) $this->_columnNames[] = $col->propertyName;
                 }
@@ -160,5 +118,48 @@ class TableInfo
 		}
 
 		return $this->_columnNames;
+	}
+
+	public function jsonSerialize(): array
+	{
+		$columns = [];
+		foreach ($this->columns as $propertyName => $col)
+		{
+			if ($propertyName !== $col->propertyName) continue; // skip fk alias entries keyed by columnName
+			$columns[$propertyName] = $col->jsonSerialize();
+		}
+
+		return [
+			'className' => $this->className ?? null,
+			'tableName' => $this->tableName ?? null,
+			'columns' => $columns,
+			'defaults' => $this->defaults,
+			'events' => $this->events,
+		];
+	}
+
+	public static function fromArray(array $data): self
+	{
+		$ti = new self(null);
+		if (isset($data['className'])) $ti->className = $data['className'];
+		if (isset($data['tableName'])) $ti->tableName = $data['tableName'];
+		$ti->defaults = $data['defaults'] ?? [];
+		$ti->events = $data['events'] ?? [];
+		foreach ($data['columns'] ?? [] as $colData)
+		{
+			$ti->addColumn(ColumnInfo::fromArray($colData, $ti));
+		}
+
+		return $ti;
+	}
+
+	public static function fromJson(string $json): self
+	{
+		return self::fromArray(json_decode($json, true, 512, JSON_THROW_ON_ERROR));
+	}
+
+	public function toJson(int $flags = 0): string
+	{
+		return json_encode($this, $flags | JSON_THROW_ON_ERROR);
 	}
 }

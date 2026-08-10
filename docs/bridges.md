@@ -41,32 +41,35 @@ suggests, not requires.
 Register it in your application's console kernel like any other command, providing:
 
 - the `AbstractDatabase` bridge to compare against,
-- the list of fully-qualified entity class names to include (or build it with the
-  `MakeMigrateCommand::scanEntitiesDir()` helper, which lists every `*.php` file in a directory as
-  a class in the given namespace),
-- the directory generated migration files are written into,
+- the directory generated migration files are written into (`migrationsDir`),
+- the entity classes to include — either an explicit list (`entityClasses`), a directory to
+  discover them from (`entitiesDir`), or both (they're merged),
 - optionally, a `DbTypeDriver` (defaults to `MariaDB`).
 
 ```php
 use Murdej\ActiveRow\Bridges\MakeMigrateCommand;
 use Symfony\Component\Console\Application;
 
-$entityClasses = MakeMigrateCommand::scanEntitiesDir(
-    namespace: 'App\\Entities',
-    dir: __DIR__ . '/../app/Entities',
-    exclude: ['BaseEntity'],
-);
-
 $command = new MakeMigrateCommand(
     database: $database,       // your AbstractDatabase bridge
-    entityClasses: $entityClasses,
     migrationsDir: __DIR__ . '/../migrations/structures',
+    entitiesDir: __DIR__ . '/../app/Entities',
 );
 
 $app = new Application();
 $app->add($command);
 $app->run();
 ```
+
+`entitiesDir` is scanned **recursively**, so entities may live in nested subdirectories. Each
+file's real namespace and class name are determined by parsing it
+(`MakeMigrateCommand::scanEntitiesDir()` is available standalone too) — no PSR-4 naming convention
+is assumed. Abstract classes (e.g. a shared base entity) are skipped automatically; interfaces,
+traits, and enums are ignored.
+
+Each entity is processed individually; if generation fails for one, the exception message names
+the offending entity class (e.g. `Migration generation failed for entity 'App\Entities\Order': ...`)
+rather than an opaque error with no indication of which entity was at fault.
 
 Usage from the CLI:
 

@@ -22,6 +22,24 @@ class NetteDatabase extends AbstractDatabase
         return $rows;
     }
 
+    public function dbBeginTransaction(): bool
+    {
+        $this->explorer->beginTransaction();
+        return true;
+    }
+
+    public function dbCommit(): bool
+    {
+        $this->explorer->commit();
+        return true;
+    }
+
+    public function dbRollback(): bool
+    {
+        $this->explorer->rollBack();
+        return true;
+    }
+
     public function insertRow(string $tableName, array $getModifiedDbData)/*: mixed */
     {
         $this->explorer->query('INSERT INTO ?name ?', $tableName, $getModifiedDbData);

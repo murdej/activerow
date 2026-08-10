@@ -54,6 +54,9 @@ Comma-separated flags in parentheses after the type/size:
 - `blankNull` — convert empty (falsy) values to `null` before saving
 - `json` — store an array as JSON
 - `fk` — foreign key referencing another entity class, see [Foreign keys](#foreign-keys)
+- `get` / `set` / `getset` — route reads/writes through `get{Name}()`/`is{Name}()`/`set{Name}()`
+  instead of raw storage; the column is not persisted, see
+  [Get/set-only columns](#getset-only-columns)
 - `dbType=<value>` — overrides the SQL column type used when generating migrations (see
   [Generating migrations](migrations.md)); the value is used verbatim, without going
   through the usual PHP-type-to-SQL-type conversion, e.g. `(dbType=MEDIUMTEXT)`. The value shares
@@ -187,3 +190,38 @@ class User
 
 echo $user->fullName; // calls getFullName()
 ```
+
+## Get/set-only columns
+
+The `get` / `set` / `getset` modificators declare a *mapped* property (with a real `@property`
+type, showing up in `TableInfo`, `toArray()`, and mass-assignment) that is nonetheless backed by
+methods rather than storage — the opposite of the undeclared-property fallback above, which only
+kicks in for names that aren't mapped at all. A get/set column is never read from or written to the
+database, and never appears in [generated migrations](migrations.md):
+
+```php
+/**
+ * @dbTable
+ * @property string $firstName [100]
+ * @property string $lastName [100]
+ * @property string $fullName (get)
+ */
+class User
+{
+    use BaseEntity;
+
+    public function getFullName(): string
+    {
+        return $this->firstName . ' ' . $this->lastName;
+    }
+}
+
+$user->fullName;                 // calls getFullName()
+$user->toArray()['fullName'];    // included, via getFullName()
+```
+
+- `get` — reads call `get{Name}()` (or `is{Name}()`)
+- `set` — writes call `set{Name}()`
+- `getset` — shorthand for `(get,set)`
+
+`fk` can't be combined with any of these — a foreign key is always a real, persisted column.
