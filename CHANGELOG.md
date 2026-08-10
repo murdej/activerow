@@ -62,6 +62,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   restored without re-running reflection/annotation parsing.
 - `TableInfo::addColumn()`, extracted from the column-registration logic in `parseClass()`/
   `EntityReflexion::parseTable()`, also used by `TableInfo::fromArray()`.
+- `TableInfo::setCache()` plugs an external cache in front of `TableInfo::get()`'s annotation
+  parsing, via the new `Murdej\ActiveRow\Interfaces\TableInfoCache` interface
+  (`load(string $className, \Closure $generator): TableInfo`). Two implementations are provided:
+  - `Murdej\ActiveRow\Bridges\NetteCache` — wraps a `Nette\Caching\Cache`, tagging each entry with
+    a `Cache::Files` dependency on the entity's own source file so edits to its annotations
+    invalidate the cache automatically.
+  - `Murdej\ActiveRow\Caching\FileTableInfoCache` — a dependency-free fallback that stores one
+    JSON file per entity (via `TableInfo::toJson()`/`fromJson()`) and invalidates it the same way,
+    by comparing its mtime against the entity's source file.
+  - `EntityReflexion::getClassFileName()` exposes the entity's source file path, used by both
+    implementations for invalidation and reusable by any other cache adapter.
 
 ### Changed
 

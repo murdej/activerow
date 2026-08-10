@@ -15,6 +15,14 @@ class EntityReflexion
 	/** @var array<string, array<string, string>> file name => (short class name => FQCN) */
 	protected static array $usesCache = [];
 
+	/**
+	 * Source file an entity class is declared in, e.g. for cache-invalidation dependencies.
+	 */
+	public static function getClassFileName(string $className): string|false
+	{
+		return (new ClassType($className))->getFileName();
+	}
+
 	public static function parseTable(TableInfo $ti, string $cn): void
 	{
 		$ref = new ClassType($cn);

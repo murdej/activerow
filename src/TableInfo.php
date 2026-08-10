@@ -2,6 +2,7 @@
 
 namespace Murdej\ActiveRow;
 
+use Murdej\ActiveRow\Interfaces\TableInfoCache;
 use Murdej\ActiveRow\NReflection\ClassType;
 
 class TableInfo implements \JsonSerializable
@@ -70,13 +71,26 @@ class TableInfo implements \JsonSerializable
 
 	protected static array $dbInfoCache = [];
 
+	protected static ?TableInfoCache $cache = null;
+
+	/**
+	 * Plugs an external cache (e.g. a Nette Cache or FileTableInfoCache instance) in front of
+	 * the annotation parsing done by get(). Pass null to go back to parsing on every request.
+	 */
+	public static function setCache(?TableInfoCache $cache): void
+	{
+		self::$cache = $cache;
+	}
+
 	public static function get(string $className) : TableInfo
 	{
 		if (!isset(self::$dbInfoCache[$className]))
 		{
-			self::$dbInfoCache[$className] = new TableInfo($className);
+			self::$dbInfoCache[$className] = self::$cache
+				? self::$cache->load($className, static fn() => new TableInfo($className))
+				: new TableInfo($className);
 		}
-		
+
 		return self::$dbInfoCache[$className];
 	}
 
