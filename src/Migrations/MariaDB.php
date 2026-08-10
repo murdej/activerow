@@ -73,7 +73,7 @@ class MariaDB implements DbTypeDriver
                 $hint = class_exists($column->type) || enum_exists($column->type)
                     ? ''
                     : ' — class/enum could not be autoloaded, check its namespace/PSR-4 mapping';
-                throw new \Exception("Unknown type '$typeDesc' for " . ($column->tableInfo ? $column->tableInfo->className . '::' : '') . "$column->propertyName" . $hint);
+                throw new \Exception("I don't know how to convert the '$typeDesc' type to a DB type for " . ($column->tableInfo ? $column->tableInfo->className . '::' : '') . "$column->propertyName" . $hint);
         }
         return [$t, $ch];
     }
