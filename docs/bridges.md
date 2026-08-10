@@ -84,3 +84,32 @@ bin/console migrations:by-diff "add bio"
 Like `DbDeploy::syncTables()` itself, the command never generates destructive SQL — removed
 columns, indexes, or foreign keys show up as `-- TODO:` comments in the output, so every generated
 migration is safe to review before running.
+
+## Caching entity metadata: NetteCache
+
+`Murdej\ActiveRow\Bridges\NetteCache` plugs a [Nette Cache](https://doc.nette.org/en/caching)
+instance into `TableInfo::get()`, so an entity's `@property` annotations are only parsed once and
+reused across requests instead of being re-parsed via reflection every time. It requires
+`nette/caching` (`composer require nette/caching`), which this package only suggests, not
+requires.
+
+```php
+use Murdej\ActiveRow\Bridges\NetteCache;
+use Murdej\ActiveRow\TableInfo;
+use Nette\Caching\Cache;
+use Nette\Caching\Storages\FileStorage;
+
+$cache = new Cache(new FileStorage(__DIR__ . '/../temp/cache'));
+TableInfo::setCache(new NetteCache($cache));
+```
+
+Call this once, early in your bootstrap (or however your DI container wires up services) — every
+`TableInfo::get()` call from then on, including the ones `DBRepository` makes internally, goes
+through the cache automatically. Use this bridge if your application already has a Nette Cache
+storage configured, so entity metadata shares it instead of writing to its own directory; each
+cached entry is tagged with a `Cache::Files` dependency on the entity's own source file, so editing
+an entity's annotations invalidates its cache entry automatically — no manual cache-clearing step.
+
+See [Caching entity metadata](caching.md) for the dependency-free alternative
+(`FileTableInfoCache`), performance guidance on when it's worth enabling, and how to write an
+adapter for a different cache library (PSR-16, Redis, ...).

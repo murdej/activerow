@@ -24,6 +24,7 @@ library itself has no hard dependency on any specific database library.
 - [Converting to array / JSON](converting.md)
 - [Database bridges](bridges.md)
   - [Console command: generating migrations](bridges.md#console-command-generating-migrations)
+  - [Caching entity metadata: NetteCache](bridges.md#caching-entity-metadata-nettecache)
 - [Generating migrations](migrations.md)
 - [Caching entity metadata](caching.md)
 - [Known limitations](#known-limitations)
