@@ -207,7 +207,9 @@ class EntityReflexion
 				{
 					$ci->propertyName = $v;
 					$ci->columnName = $v;
-				} else $ci->$k = $v;
+				}
+				else if (property_exists($ci, $k)) $ci->$k = $v;
+				else throw new \Exception("Invalid column flag '$k', property '{$ci->getPropertyInfo()}'");
 			}
 		}
 	}

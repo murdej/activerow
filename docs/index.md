@@ -20,6 +20,7 @@ library itself has no hard dependency on any specific database library.
 - [Repository](repository.md)
 - [Querying](querying.md)
 - [Saving entities](saving.md)
+  - [Transactions](saving.md#transactions)
 - [Events](events.md)
 - [Converting to array / JSON](converting.md)
 - [Database bridges](bridges.md)

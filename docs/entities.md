@@ -103,6 +103,10 @@ $employee->companyId = 5;    // set the reference by id
 $employee->company = $x;     // throws — set the id column instead
 ```
 
+Combine `fk` with `?`/`nullable` for an optional reference (`@property ?Company $company (fk)`).
+Reading the property returns `null` when the underlying `...Id` column is `null`, without
+querying the database.
+
 ## Serialized columns
 
 A property typed with a plain class and marked `(serialize)` stores the value serialized in a

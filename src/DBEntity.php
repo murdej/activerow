@@ -79,7 +79,14 @@ class DBEntity
             if ($colDef->blankNull && !$value) $value = null;
             if ($colDef->fkClass && $col == $colDef->propertyName)
                 throw new \Exception("Cannot replace fk object $col.");
-            if (!array_key_exists($col, $this->converted) || $this->converted[$col] != $value)
+            // Strict !== — a loose != treats null as equal to 0/false/''/'0', which silently drops a
+            // real change (e.g. a bool column going from an existing true(1)/unset(null) value to
+            // false(0)) since the "already equal, nothing to do" branch below then never marks the
+            // column modified nor writes it. Found via App\Services\Scripting\
+            // RunningProcParamValueApplierService in the fluxus project: RunningProcParam::$intValue
+            // going from 1 -> null (apply()'s own clear step) -> 0 silently stayed null forever,
+            // because `null != 0` is false in PHP.
+            if (!array_key_exists($col, $this->converted) || $this->converted[$col] !== $value)
             {
                 $this->converted[$col] = $value;
                 if (!in_array($col, $this->modified)) $this->modified[] = $col;
@@ -121,8 +128,10 @@ class DBEntity
                 $colDef = $this->getDbInfo()->columns[$col];
                 if ($colDef->fkClass && $col == $colDef->propertyName)
                 {
+                    $fkValue = $this->get($colDef->columnName);
+                    if ($fkValue === null) return null;
                     $className = $colDef->fkClass;
-                    return $this->database->getEntityByPrimary(TableInfo::get($className), $this->get($colDef->columnName));
+                    return $this->database->getEntityByPrimary(TableInfo::get($className), $fkValue);
                 }
                 else if (!$colDef->nullable)
                 {
@@ -159,7 +168,10 @@ class DBEntity
             if ($colInfo->serialize && array_key_exists($col, $this->converted))
             {
                 $dbValue = Converter::get()->convertFrom($this->converted[$col], $colInfo);
-                if (!isset($this->src[$col]) || $dbValue != $this->src[$col])
+                // Same !== fix as set() above — both sides are already the serialized (string) DB
+                // representation here, so strict comparison is safe and avoids the same null/0/''
+                // false-negative class of bug.
+                if (!isset($this->src[$col]) || $dbValue !== $this->src[$col])
                     $res[$colInfo->columnName] = $dbValue;
             }
             if ($forInsert)
@@ -237,6 +249,11 @@ class DBEntity
                 $event->data,
                 $keys,
             );
+            $pkCol = reset($ti->primary);
+            if ($pkCol) {
+                $freshEntity = $this->database->getEntityByPrimary($ti, reset($keys));
+                if ($freshEntity) $this->src = $freshEntity->dbEntity->src;
+            }
             $this->converted = [];
             $this->modified = [];
 

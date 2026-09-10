@@ -31,7 +31,15 @@ abstract class AbstractDatabase
 
 	public function inTransaction(callable $operations): bool
 	{
-		
+		$this->dbBeginTransaction();
+		try {
+			$operations();
+			$this->dbCommit();
+			return true;
+		} catch (\Throwable $e) {
+			$this->dbRollback();
+			throw $e;
+		}
 	}
 
     public function makeSqlMaker(): BaseMaker

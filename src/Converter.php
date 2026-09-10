@@ -69,9 +69,9 @@ class Converter
 				case 'int':
 					return (int)$value;
 				case 'decimal':
-					return (double)$value;
+					return (float)$value;
 				case 'double':
-					return (double)$value;
+					return (float)$value;
 				case 'float':
 					return (float)$value;
 				case 'json':
@@ -87,8 +87,8 @@ class Converter
 						case $value === 'no':
 						case $value === 'off':
 						case $value === "\x00":
-						case $value === false;
-						case $value === '0';
+						case $value === false:
+						case $value === '0':
 							return false;
 						case $value === 1:
 						case $value === 'true':
@@ -96,7 +96,7 @@ class Converter
 						case $value === 'on':
 						case $value === "\x01":
 						case $value === true:
-						case $value === '1';
+						case $value === '1':
 							return true;
 						default:
 							throw new \Exception("Invalid bool value $value");

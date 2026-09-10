@@ -41,6 +41,7 @@ class Parameter extends \ReflectionParameter
 	/**
 	 * @return ClassType
 	 */
+	#[\ReturnTypeWillChange]
 	public function getClass()
 	{
 		return ($ref = parent::getClass()) ? new ClassType($ref->getName()) : null;
@@ -66,6 +67,7 @@ class Parameter extends \ReflectionParameter
 	/**
 	 * @return ClassType
 	 */
+	#[\ReturnTypeWillChange]
 	public function getDeclaringClass()
 	{
 		return ($ref = parent::getDeclaringClass()) ? new ClassType($ref->getName()) : null;
@@ -75,6 +77,7 @@ class Parameter extends \ReflectionParameter
 	/**
 	 * @return Method|GlobalFunction
 	 */
+	#[\ReturnTypeWillChange]
 	public function getDeclaringFunction()
 	{
 		return is_array($this->function)

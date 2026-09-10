@@ -25,30 +25,41 @@ class DBSelect implements \Iterator, \Countable
 
     protected ?array $result = null;
 
+    // #[\ReturnTypeWillChange] on all 5 — \Iterator declares current()/key(): mixed, valid(): bool,
+    // next()/rewind(): void, but next() here deliberately RETURNS the entity (mimicking the native
+    // current()/next()/key() array-cursor functions this class wraps), which is incompatible with
+    // `: void` — adding a real `: void` return type would be a fatal "must not return a value"
+    // error. The attribute suppresses PHP 8.1+'s Iterator-signature-mismatch deprecation without
+    // changing any of these methods' actual behavior.
+    #[\ReturnTypeWillChange]
     public function current()
     {
         $this->fetchResultIfNeed();
         return $this->createEntity(current($this->result));
     }
 
+    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->fetchResultIfNeed();
         return $this->createEntity(next($this->result));
     }
 
+    #[\ReturnTypeWillChange]
     public function key()
     {
         $this->fetchResultIfNeed();
         return key($this->result);
     }
 
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         $this->fetchResultIfNeed();
         return key($this->result) !== null;
     }
 
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->fetchResultIfNeed();

@@ -67,6 +67,7 @@ class GlobalFunction extends \ReflectionFunction
 	/**
 	 * @return Extension
 	 */
+	#[\ReturnTypeWillChange]
 	public function getExtension()
 	{
 		return ($name = $this->getExtensionName()) ? new Extension($name) : null;
@@ -76,6 +77,7 @@ class GlobalFunction extends \ReflectionFunction
 	/**
 	 * @return Parameter[]
 	 */
+	#[\ReturnTypeWillChange]
 	public function getParameters()
 	{
 		foreach ($res = parent::getParameters() as $key => $val) {

@@ -81,6 +81,7 @@ class Method extends \ReflectionMethod
 	/**
 	 * @return ClassType
 	 */
+	#[\ReturnTypeWillChange]
 	public function getDeclaringClass()
 	{
 		return new ClassType(parent::getDeclaringClass()->getName());
@@ -90,6 +91,7 @@ class Method extends \ReflectionMethod
 	/**
 	 * @return static
 	 */
+	#[\ReturnTypeWillChange]
 	public function getPrototype()
 	{
 		$prototype = parent::getPrototype();
@@ -100,6 +102,7 @@ class Method extends \ReflectionMethod
 	/**
 	 * @return Extension
 	 */
+	#[\ReturnTypeWillChange]
 	public function getExtension()
 	{
 		return ($name = $this->getExtensionName()) ? new Extension($name) : null;
@@ -109,6 +112,7 @@ class Method extends \ReflectionMethod
 	/**
 	 * @return Parameter[]
 	 */
+	#[\ReturnTypeWillChange]
 	public function getParameters()
 	{
 		$me = [parent::getDeclaringClass()->getName(), $this->getName()];

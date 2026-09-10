@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `DBEntity::save()` on an existing entity (update) now refreshes `$src` from the database
+  afterwards, same as insert already did — reading a just-saved property from the same PHP
+  instance no longer returns the stale pre-update value.
+- Reading a nullable `fk` property whose underlying `...Id` column is actually `NULL` now
+  returns `null` instead of throwing `TypeError` from `getEntityByPrimary()`.
+- `Converter::convertTo()`/`convertFrom()` no longer use the deprecated `(double)` cast
+  (`(float)` instead), and `Converter`'s bool-conversion `switch` no longer uses `case X;`
+  (missing colon) — both are `E_DEPRECATED` on PHP 8.5 and fatal under
+  `Tracy\Debugger::$strictMode = true`.
+- `DBSelect`'s `\Iterator` methods (`current`/`next`/`key`/`valid`/`rewind`) are marked
+  `#[\ReturnTypeWillChange]` to silence the PHP 8.1+ signature-mismatch deprecation.
+- Same `#[\ReturnTypeWillChange]` fix applied to the `Murdej\ActiveRow\NReflection` classes
+  that extend native `Reflection*` classes (`Method`, `Property`, `Parameter`,
+  `GlobalFunction`, `Extension`) — instantiating any of them previously triggered
+  `E_DEPRECATED` on PHP 8.1+, fatal under strict mode.
+- `EntityReflexion::parseColumn()` no longer creates a dynamic, undeclared property on
+  `ColumnInfo` for an unrecognized array-form `@property` flag; it now throws a clear
+  `\Exception`, consistent with the string-form annotation branch.
+- `TableInfo::tableName()` was missing its `return` statement and always returned `null`
+  despite its `string` return type, throwing `TypeError` on call.
+- `AbstractDatabase::inTransaction()` had an empty body and always threw `TypeError` (missing
+  `bool` return); it now actually runs the callback inside a transaction, committing on
+  success and rolling back (then rethrowing) on exception.
+
 ## [1.2.0] - 2026-08-10
 
 ### Added

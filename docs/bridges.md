@@ -1,13 +1,18 @@
 # Database bridges
 
 The library itself never talks to a database directly — every entity operation goes through an
-`AbstractDatabase` implementation. A bridge only has to implement three methods:
+`AbstractDatabase` implementation. A bridge has to implement these methods:
 
 ```php
 abstract class AbstractDatabase
 {
     // Run a query with positional `?` placeholders, return rows as plain associative arrays.
     abstract function dbExecuteQuery(string $query, array $params): array;
+
+    // Begin / commit / roll back a transaction — used by inTransaction(), see saving.md#transactions.
+    abstract function dbBeginTransaction(): bool;
+    abstract function dbCommit(): bool;
+    abstract function dbRollback(): bool;
 
     // Insert a row, return the new primary key.
     abstract function insertRow(string $tableName, array $data);

@@ -96,7 +96,7 @@ class TableInfo implements \JsonSerializable
 
     public static function tableName(string $className) : string
     {
-        self::get($className)->tableName;
+        return self::get($className)->tableName;
     }
 
     public static function getFullClassName(string $className, string $nameSpace)
